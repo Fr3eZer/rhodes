@@ -1,28 +1,28 @@
 /*------------------------------------------------------------------------
-* (The MIT License)
-* 
-* Copyright (c) 2008-2011 Rhomobile, Inc.
-* 
-* Permission is hereby granted, free of charge, to any person obtaining a copy
-* of this software and associated documentation files (the "Software"), to deal
-* in the Software without restriction, including without limitation the rights
-* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-* copies of the Software, and to permit persons to whom the Software is
-* furnished to do so, subject to the following conditions:
-* 
-* The above copyright notice and this permission notice shall be included in
-* all copies or substantial portions of the Software.
-* 
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-* THE SOFTWARE.
-* 
-* http://rhomobile.com
-*------------------------------------------------------------------------*/
+ * (The MIT License)
+ *
+ * Copyright (c) 2008-2011 Rhomobile, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ * http://rhomobile.com
+ *------------------------------------------------------------------------*/
 
 package com.rhomobile.rhodes.webview;
 
@@ -45,31 +45,41 @@ import android.webkit.URLUtil;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.webkit.CookieSyncManager;
+import android.content.Intent;
 
 public class RhoWebViewClient extends WebViewClient
 {
     private final String TAG = RhoWebViewClient.class.getSimpleName();
     private GoogleWebView mWebView;
-
+    
     public RhoWebViewClient(GoogleWebView webView) {
         mWebView = webView;
     }
-
-//    @Override
-//    public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
-//        Logger.I(TAG, "Resource request: " + url);
-//        return null;
-//    }
-//
-//    public void onLoadResource(WebView view, String url) {
-//        Logger.I(TAG, "Load resource" + url);
-//    }
-
+    
+    //    @Override
+    //    public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
+    //        Logger.I(TAG, "Resource request: " + url);
+    //        return null;
+    //    }
+    //
+    //    public void onLoadResource(WebView view, String url) {
+    //        Logger.I(TAG, "Load resource" + url);
+    //    }
+    
     
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
         Logger.I(TAG, "Loading URL: " + url);
+        //Make a new Android Intent instead of loading a url when app tries to load the rabobank or triodos bank app.
+        try{
+            if (url != null && (url.startsWith("nl.rabobank.ideal://") || url.startsWith("triodosmobilebanking://"))) {
+                Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                view.getContext().startActivity(myIntent);
+                return true;
+            }
+        } catch( Exception e){
+            
+        }
         boolean res = RhodesService.getInstance().handleUrlLoading(url);
         if (!res) {
             Logger.profStart("BROWSER_PAGE");
@@ -92,25 +102,24 @@ public class RhoWebViewClient extends WebViewClient
         super.onPageStarted(view, url, favicon);
         
         RhoExtManager.getImplementationInstance().onNavigateStarted(view, url);
-
+        
         if (mWebView.getConfig() != null && mWebView.getConfig().getBool("enablePageLoadingIndication"))
             RhodesActivity.safeGetInstance().getWindow().setFeatureInt(Window.FEATURE_PROGRESS, 0);
     }
     
     @Override
     public void onPageFinished(WebView view, String url) {
-
+        
         Logger.profStop("BROWSER_PAGE");
-
+        
         // Set title
         String title = view.getTitle();
         RhodesActivity.safeGetInstance().setTitle(title);
         if (mWebView.getConfig() != null && mWebView.getConfig().getBool("enablePageLoadingIndication"))
             RhodesActivity.safeGetInstance().getWindow().setFeatureInt(Window.FEATURE_PROGRESS, RhodesActivity.MAX_PROGRESS);
-
+        
         RhoExtManager.getImplementationInstance().onNavigateComplete(view, url);
-        //CookieSyncManager.getInstance().sync();
-
+        
         super.onPageFinished(view, url);
     }
     
@@ -125,10 +134,14 @@ public class RhoWebViewClient extends WebViewClient
         msg.append(errorCode);
         msg.append(" - " + description);
         Logger.E(TAG, msg.toString());
-
+        
         RhoExtManager.getImplementationInstance().onLoadError(view, IRhoExtension.LoadErrorReason.INTERNAL_ERROR);
+        
+        //Android sometimes gives a "Too many redirects" error, the fix is to clear cache and reload the url
+        view.clearCache(true);
+        view.loadUrl(failingUrl);
     }
-
+    
     @Override
     public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
         
@@ -139,22 +152,23 @@ public class RhoWebViewClient extends WebViewClient
             StringBuilder msg = new StringBuilder();
             msg.append("SSL error - ");
             switch(error.getPrimaryError()) {
-            case SslError.SSL_NOTYETVALID:
-                msg.append("The certificate is not yet valid: ");
-                break;
-            case SslError.SSL_EXPIRED:
-                msg.append("The certificate has expired: ");
-                break;
-            case SslError.SSL_IDMISMATCH:
-                msg.append("Hostname mismatch: ");
-                break;
-            case SslError.SSL_UNTRUSTED:
-                msg.append("The certificate authority is not trusted: ");
-                break;
+                case SslError.SSL_NOTYETVALID:
+                    msg.append("The certificate is not yet valid: ");
+                    break;
+                case SslError.SSL_EXPIRED:
+                    msg.append("The certificate has expired: ");
+                    break;
+                case SslError.SSL_IDMISMATCH:
+                    msg.append("Hostname mismatch: ");
+                    break;
+                case SslError.SSL_UNTRUSTED:
+                    msg.append("The certificate authority is not trusted: ");
+                    break;
             }
             msg.append(error.getCertificate().toString());
             Logger.W(TAG, msg.toString());
-            handler.cancel();
+            //Rabobank iDeal webpage gives SSL error, so proceed when SSL error occurs
+            handler.proceed();
         }
     }
 }

@@ -376,6 +376,7 @@ static BOOL makeHiddenUntilLoadContent = YES;
     w.userInteractionEnabled = YES;
     w.multipleTouchEnabled = YES;
     w.clipsToBounds = NO;
+    w.scrollView.bounces = NO;
     w.dataDetectorTypes = UIDataDetectorTypeNone;
     w.delegate = self;
     w.autoresizesSubviews = YES;
