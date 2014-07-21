@@ -284,8 +284,11 @@
     UIGraphicsBeginImageContextWithOptions(contextRect.size, NO, scale);
     CGContextRef c = UIGraphicsGetCurrentContext();
 
-    CGContextSetShadowWithColor(c, shadowOffset, shadowBlur, cgShadowColor);
-
+    //CGContextSetShadowWithColor makes the tabbar icons glow on iOS 7.1 or higher, so disabled it for those versions
+    if (SYSTEM_VERSION_LESS_THAN(@"7.1")) {
+        CGContextSetShadowWithColor(c, shadowOffset, shadowBlur, cgShadowColor);
+    }
+    
     CGContextBeginTransparencyLayer(c, NULL);
     CGContextScaleCTM(c, 1.0, -1.0);
     CGContextClipToMask(c, CGRectMake(itemImagePosition.x, -itemImagePosition.y, itemImageSize.width, -itemImageSize.height), [itemImage CGImage]);
@@ -331,6 +334,7 @@
 }
 
 #define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
+#define SYSTEM_VERSION_LESS_THAN(v)                 ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
 
 - (id)initWithMainView:(id<RhoMainView>)v parent:(UIWindow*)p bar_info:(NSDictionary*)bar_info {
 	[SimpleMainView disableHiddenOnStart];
