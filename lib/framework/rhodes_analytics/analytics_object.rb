@@ -67,11 +67,11 @@ module RhodesAnalytics
     def track tracking_id, client_id
       @options['tid'] = tracking_id
       @options['cid'] = client_id
+      @options['v'] = "1";
+      @options['t'] = self.class::HITTYPE;
       client = RhodesAnalytics::Client.new()
       client.send(@options)
     end
-    
-    #TODO VERSION PARAMETER?
     
   end
 end

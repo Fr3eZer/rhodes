@@ -18,7 +18,7 @@ module RhodesAnalytics
       # Delete "&" on end of postdata string
       postdata = postdata.chop
       
-      http_post("www.google.nl", postdata)
+      http_post("www.google-analytics.com/collect", postdata)
     end
     
     def convert_boolean boolean
@@ -28,6 +28,7 @@ module RhodesAnalytics
     def http_post(url, data)
       puts "POSTDATA #{data}"
       response = Rho::Network.post(:url => url, :body => data)
+      puts response
       unless response["status"] == "ok"
         puts "Status of request not ok"
       end
