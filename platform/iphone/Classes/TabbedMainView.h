@@ -53,6 +53,7 @@
     UITabBarController *tabbar;
     NSArray *tabbarData;
     int tabindex;
+	int oldTabIndex;
     id<IMethodResult> on_change_tab_callback;
     CGRect rootFrame;
 }
@@ -60,6 +61,7 @@
 @property (nonatomic,retain) UITabBarController *tabbar;
 @property (nonatomic,retain) NSArray *tabbarData;
 @property (nonatomic,assign) int tabindex;
+@property (nonatomic,assign) int oldTabIndex;
 @property (nonatomic,assign) id<IMethodResult> on_change_tab_callback;
 
 - (id)initWithMainView:(id<RhoMainView>)v parent:(UIWindow*)p bar_info:(NSDictionary*)bar_info;

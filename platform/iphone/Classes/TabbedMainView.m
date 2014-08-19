@@ -254,7 +254,7 @@
 
 @implementation TabbedMainView
 
-@synthesize tabbar, tabbarData, tabindex, on_change_tab_callback;
+@synthesize tabbar, tabbarData, tabindex, on_change_tab_callback, oldTabIndex;
 
 - (UIImage*)recolorImageWithColor:(UIImage*)image color:(UIColor *)color shadowColor:(UIColor *)shadowColor shadowOffset:(CGSize)shadowOffset shadowBlur:(CGFloat)shadowBlur
 {
@@ -404,6 +404,7 @@
     tabbar.delegate = [Rhodes sharedInstance];
     tabbar.view.frame = frame;
     tabbar.selectedIndex = 0;
+	self.oldTabIndex = 0;
     
     // DO NOT REMOVE THIS LINE!!!
     // First call of self.view (when self.view is nil) trigger loadView
@@ -689,6 +690,9 @@
 
 - (void)onSwitchTab {
 	int new_index = tabbar.selectedIndex;
+	if(self.oldTabIndex == new_index){
+		[self callCallback:self.oldTabIndex]; //Same tab is pressed
+	}
     RhoTabBarData *td = [self tabData:new_index];
 	if (td != nil) {
 		tabindex = new_index;
@@ -699,6 +703,7 @@
 		}
 		[[[self subView:tabindex] view] setNeedsDisplay];
 	}
+	self.oldTabIndex = new_index;
 }
 
 -(void)callCallback:(int)new_index {
