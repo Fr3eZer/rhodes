@@ -807,9 +807,7 @@ public class TabbedMainView implements MainView {
 			}
 			tabIndex = new_tabIndex;
 
-			if (real_change) {
-				callChangeTabCallback(tabIndex);
-			}
+			callChangeTabCallback(tabIndex);
 			
 			if ((data.reload /*|| real_change*/) || !data.loaded ) {
 				if (mIsReallyOnScreen) {
